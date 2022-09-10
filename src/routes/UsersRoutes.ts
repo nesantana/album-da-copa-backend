@@ -1,32 +1,61 @@
 import UsersModel from '@models/UsersModel'
+import StickersModel from '@models/StickersModel'
+import { verifyJWT } from '@utils/auth'
+import AlbumCopa from '@utils/ClassAlbum'
+import { Credentials } from '@utils/credentials'
+import { parseInfo } from '@utils/parseInfo'
 import { Router } from 'express'
+import jwt from 'jsonwebtoken'
 
 const router = Router()
 
-router.get('/', async (_, res) => {
+router.get('/find-me', verifyJWT, async (req: any, res) => {
   try {
-    const contacts = await UsersModel.findAll()
+    const user = await UsersModel.findOne({ where: { id: req.userId } })
 
-    res.send(contacts)
-  } catch (err) {
-    res.status(500).json('Opss, algo deu errado enquanto buscávamos esses contatos!')
+    const userParse = parseInfo(user)
+
+    delete userParse.password
+    delete userParse.createdAt
+    delete userParse.updatedAt
+
+    res.send(userParse)
+  } catch (error) {
+    res.status(500).json({ error: 'Não conseguimos buscar seus dados' })
+  }
+})
+
+router.get('/find-username', async (req: any, res) => {
+  const { username } = req.query
+  try {
+    const user = await UsersModel.findOne({ where: { username } })
+
+    const userParse = parseInfo(user)
+
+    delete userParse.password
+    delete userParse.createdAt
+    delete userParse.updatedAt
+
+    res.send(userParse)
+  } catch (error) {
+    res.status(500).json({ error: 'Não conseguímos validar' })
   }
 })
 
 router.post('/create', async (req, res) => {
   const {
-    name,
+    username,
     email,
-    phone,
-    categories,
+    password,
+    confirm_password,
   } = req.body
 
   let canKeep: boolean = true
   const message: string[] = []
 
-  if (!name) {
+  if (!username) {
     canKeep = false
-    message.push('O campo "Nome" é obrigatório')
+    message.push('O campo "Nome de usuário" é obrigatório')
   }
 
   if (!email) {
@@ -34,14 +63,9 @@ router.post('/create', async (req, res) => {
     message.push('O campo "E-mail" é obrigatório')
   }
 
-  if (!phone) {
+  if (password !== confirm_password) {
     canKeep = false
-    message.push('O campo "Telefone" é obrigatório')
-  }
-
-  if (!categories) {
-    canKeep = false
-    message.push('O campo "Categoria(s)" é obrigatório')
+    message.push('O campo Senha e Confirmação de Senha precisam ser iguais')
   }
 
   if (!canKeep) {
@@ -51,66 +75,94 @@ router.post('/create', async (req, res) => {
   }
 
   try {
-    const newContact = await UsersModel.create({ ...req.body })
+    const userByUsername = await UsersModel.findOne({ where: { username } })
 
-    res.send(newContact)
+    if (userByUsername) {
+      return res.status(500).json({ error: 'Opss, parece que esse nome de usuário já está sendo utilizado!' })
+    }
+
+    const userByEmail = await UsersModel.findOne({ where: { email } })
+
+    if (userByEmail) {
+      return res.status(500).json({ error: 'Opss, parece que esse e-mail já está sendo utilizado!' })
+    }
+
+    const body = {
+      ...req.body,
+      password: Buffer.from(password, 'utf8').toString('base64'),
+    }
+
+    const newContact = await UsersModel.create(body)
+
+    const userParse = parseInfo(newContact)
+    const newAlbum = new AlbumCopa(userParse.id).Stickers
+
+    const album = await StickersModel.create({ ...newAlbum })
+
+    const albumParse = parseInfo(album)
+
+    delete userParse.password
+    delete userParse.createdAt
+    delete userParse.updatedAt
+
+    res.send({
+      ...userParse,
+      album: {
+        ...albumParse,
+        countries: parseInfo(albumParse.countries),
+      },
+    })
   } catch (error) {
     return res.status(500).json({ error: 'Opss, deu algum erro aqui. Tente criar um novo contato em breve...' })
   }
 })
 
-router.post('/edit', async (req, res) => {
+router.post('/', async (req, res) => {
   const {
-    id,
-    name,
-    phone,
-    email,
-    categories,
+    user,
+    password,
   } = req.body
 
   let canKeep: boolean = true
   const message: string[] = []
 
-  if (!id) {
+  if (!user) {
     canKeep = false
-    message.push('O ID é obrigatório')
+    message.push('O campo "Usuário/E-mail" é obrigatório')
+  }
+
+  if (!password) {
+    canKeep = false
+    message.push('O campo "Senha" é obrigatório')
   }
 
   if (!canKeep) {
-    return res.status(422).json({
+    res.status(422).json({
       error: message,
     })
   }
 
   try {
-    const params: any = {}
+    let userFind: any = null
 
-    if (name) {
-      params.name = name
+    userFind = await UsersModel.findOne({ where: { email: user } })
+
+    if (!userFind) {
+      userFind = await UsersModel.findOne({ where: { username: user } })
     }
 
-    if (phone) {
-      params.phone = phone
+    const userParse = parseInfo(userFind)
+    const decodePassword = Buffer.from(userParse.password, 'base64').toString('utf8')
+
+    if (decodePassword !== password) {
+      return res.status(500).json({ error: 'Opss, parece que você erro o usuário ou a senha' })
     }
-
-    if (email) {
-      params.email = email
-    }
-
-    if (categories) {
-      params.categories = categories
-    }
-
-    await UsersModel.update(
-      params,
-      {
-        where: { id },
-      },
-    )
-
-    return res.send('Contato atualizado com sucesso')
+    const token = jwt.sign({ id: userParse.id }, Credentials.secret, {
+      expiresIn: '7d',
+    })
+    return res.json({ auth: true, token })
   } catch (error) {
-    return res.status(500).json(`Erro ao atualizar contato: ${error}`)
+    return res.status(500).json({ error: 'Não conseguimos validar esse usuário agora' })
   }
 })
 

@@ -1,27 +1,23 @@
 import { DataTypes } from 'sequelize'
 import db from '../db'
 
-const UsersModel = db.define('contact', {
+const StickersModel = db.define('stickers', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     allowNull: false,
     primaryKey: true,
   },
-  email: {
+  id_user: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  username: {
-    type: DataTypes.STRING,
+  countries: {
+    type: DataTypes.TEXT('long'),
     allowNull: true,
   },
 })
 
-UsersModel.sync({ alter: true })
+StickersModel.sync({ alter: true })
 
-export default UsersModel
+export default StickersModel

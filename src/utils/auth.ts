@@ -10,12 +10,6 @@ export const verifyJWT = (req: any, res: any, next: any) => {
   jwt.verify(token, Credentials.secret, async (err: any, decoded: any) => {
     if (err) return res.status(500).json({ auth: false, message: 'Erro no token.' })
 
-    const user = await UsersModel.findOne({ where: { id: decoded.id } })
-
-    if (!Number(parseInfo(user).access)) {
-      req.pendding = true
-    }
-
     req.userId = decoded.id
     return next()
   })

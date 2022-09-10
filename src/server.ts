@@ -2,6 +2,7 @@ import express from 'express'
 import http from 'http'
 
 import UsersRoutes from '@routes/UsersRoutes'
+import StickersRoutes from '@routes/StickersRoutes'
 
 import cors from 'cors'
 import { port } from '@utils/credentials'
@@ -18,6 +19,7 @@ app.use(cors(corsOptions))
 app.use(express.json())
 
 app.use('/login', UsersRoutes)
+app.use('/stickers', StickersRoutes)
 
 server.listen(port, () => {
   console.log(`App Rodando: http://localhost:${port}`)
