@@ -1,9 +1,31 @@
 import StickersModel from '@models/StickersModel'
+import UsersModel from '@models/UsersModel'
 import { verifyJWT } from '@utils/auth'
 import { parseInfo } from '@utils/parseInfo'
 import { Router } from 'express'
 
 const router = Router()
+
+router.get('/searchAlbum', async (req: any, res) => {
+  const { username } = req.query
+
+  try {
+    const user = await UsersModel.findOne({ where: { username } })
+
+    const userParse = parseInfo(user)
+
+    const album = await StickersModel.findOne({ where: { id_user: userParse.id } })
+
+    const albumParse = parseInfo(album)
+
+    res.send({
+      ...albumParse,
+      countries: JSON.parse(albumParse.countries),
+    })
+  } catch (error) {
+    res.status(500).json({ error: 'Não conseguimos buscar seu album' })
+  }
+})
 
 router.get('/', verifyJWT, async (req: any, res) => {
   try {
