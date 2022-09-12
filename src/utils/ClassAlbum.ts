@@ -34,11 +34,11 @@ export default class AlbumCopa {
 
   ECU: iCountryAlbum = simpleCountry('ECU')
 
-  SEM: iCountryAlbum = simpleCountry('SEM')
+  SEN: iCountryAlbum = simpleCountry('SEN')
 
   NED: iCountryAlbum = simpleCountry('NED')
 
-  END: iCountryAlbum = simpleCountry('END')
+  ENG: iCountryAlbum = simpleCountry('ENG')
 
   IRN: iCountryAlbum = simpleCountry('IRN')
 
@@ -64,7 +64,7 @@ export default class AlbumCopa {
 
   ESP: iCountryAlbum = simpleCountry('ESP')
 
-  GRC: iCountryAlbum = simpleCountry('GRC')
+  CRC: iCountryAlbum = simpleCountry('CRC')
 
   GER: iCountryAlbum = simpleCountry('GER')
 
@@ -101,9 +101,9 @@ export default class AlbumCopa {
       this.FWC,
       this.QAT,
       this.ECU,
-      this.SEM,
+      this.SEN,
       this.NED,
-      this.END,
+      this.ENG,
       this.IRN,
       this.USA,
       this.WAL,
@@ -116,7 +116,7 @@ export default class AlbumCopa {
       this.DEN,
       this.TUN,
       this.ESP,
-      this.GRC,
+      this.CRC,
       this.GER,
       this.JPN,
       this.BEL,
