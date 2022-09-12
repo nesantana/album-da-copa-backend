@@ -42,6 +42,65 @@ router.get('/find-username', async (req: any, res) => {
   }
 })
 
+router.post('/edit', verifyJWT, async (req: any, res) => {
+  const {
+    username,
+    email,
+    password,
+    confirm_password,
+    current_password,
+  } = req.body
+
+  if (password !== confirm_password) {
+    return res.status(500).json({ error: 'O campo Senha e Confirmação de Senha precisam ser iguais' })
+  }
+
+  try {
+    const user = await UsersModel.findOne({ where: { id: req.userId } })
+
+    const userParsed = parseInfo(user)
+
+    const decodePassword = Buffer.from(userParsed.password, 'base64').toString('utf8')
+
+    if (decodePassword !== current_password) {
+      return res.status(500).json({ error: 'Opss, parece que essa não é sua senha atual' })
+    }
+
+    if (username !== userParsed.username) {
+      const findUsername = UsersModel.findOne({ where: { username } })
+
+      if (findUsername) {
+        return res.status(500).json({ error: 'Opss, este nome de usuário já está sendo utilizado!' })
+      }
+    }
+
+    if (email !== userParsed.email) {
+      const findEmail = UsersModel.findOne({ where: { email } })
+
+      if (findEmail) {
+        return res.status(500).json({ error: 'Opss, este e-mail já está sendo utilizado!' })
+      }
+    }
+
+    const body = {
+      username,
+      email,
+      password: Buffer.from(password, 'utf8').toString('base64'),
+    }
+
+    await UsersModel.update(
+      body,
+      {
+        where: { id: req.userId },
+      },
+    )
+
+    return res.send('Sucesso')
+  } catch (err) {
+    return res.status(500).json({ error: 'Opss, parece que algo deu errado.' })
+  }
+})
+
 router.post('/create', async (req, res) => {
   const {
     username,
