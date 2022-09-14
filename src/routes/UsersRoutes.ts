@@ -71,7 +71,7 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
     }
 
     if (username && username !== userParsed.username) {
-      const findUsername = UsersModel.findOne({ where: { username } })
+      const findUsername = await UsersModel.findOne({ where: { username } })
 
       if (findUsername) {
         return res.status(500).json({ error: 'Opss, este nome de usuário já está sendo utilizado!' })
@@ -79,7 +79,7 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
     }
 
     if (email && email !== userParsed.email) {
-      const findEmail = UsersModel.findOne({ where: { email } })
+      const findEmail = await UsersModel.findOne({ where: { email } })
 
       if (findEmail) {
         return res.status(500).json({ error: 'Opss, este e-mail já está sendo utilizado!' })
