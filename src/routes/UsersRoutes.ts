@@ -51,8 +51,10 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
     current_password,
   } = req.body
 
-  if (password !== confirm_password) {
-    return res.status(500).json({ error: 'O campo Senha e Confirmação de Senha precisam ser iguais' })
+  if (current_password) {
+    if (password !== confirm_password) {
+      return res.status(500).json({ error: 'O campo Senha e Confirmação de Senha precisam ser iguais' })
+    }
   }
 
   try {
@@ -62,8 +64,10 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
 
     const decodePassword = Buffer.from(userParsed.password, 'base64').toString('utf8')
 
-    if (decodePassword !== current_password) {
-      return res.status(500).json({ error: 'Opss, parece que essa não é sua senha atual' })
+    if (current_password) {
+      if (decodePassword !== current_password) {
+        return res.status(500).json({ error: 'Opss, parece que essa não é sua senha atual' })
+      }
     }
 
     if (username !== userParsed.username) {
@@ -82,10 +86,13 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
       }
     }
 
-    const body = {
+    const body: any = {
       username,
       email,
-      password: Buffer.from(password, 'utf8').toString('base64'),
+    }
+
+    if (password) {
+      body.password = Buffer.from(password, 'utf8').toString('base64')
     }
 
     await UsersModel.update(
