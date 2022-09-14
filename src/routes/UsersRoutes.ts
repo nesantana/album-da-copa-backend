@@ -70,7 +70,7 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
       }
     }
 
-    if (username !== userParsed.username) {
+    if (username && username !== userParsed.username) {
       const findUsername = UsersModel.findOne({ where: { username } })
 
       if (findUsername) {
@@ -78,7 +78,7 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
       }
     }
 
-    if (email !== userParsed.email) {
+    if (email && email !== userParsed.email) {
       const findEmail = UsersModel.findOne({ where: { email } })
 
       if (findEmail) {
@@ -86,9 +86,14 @@ router.post('/edit', verifyJWT, async (req: any, res) => {
       }
     }
 
-    const body: any = {
-      username,
-      email,
+    const body: any = {}
+
+    if (username) {
+      body.username = username
+    }
+
+    if (email) {
+      body.email = email
     }
 
     if (password) {
